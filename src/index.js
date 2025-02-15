@@ -1,7 +1,7 @@
 import './index.css';
 import { initialCards } from './cards.js';
 import { createCard, deleteCard, likeCard } from './components/card.js';
-import { openModal, closeModal } from './components/modal.js';
+import { openModal, closeModal, closeByOverlay } from './components/modal.js';
 
 // Модальное окно редактирования профиля
 const editModalElement = document.querySelector('.popup_type_edit');
@@ -19,6 +19,8 @@ const profileDescription = document.querySelector('.profile__description');
 
 // Попап с изображением
 const imagePopup = document.querySelector('.popup_type_image');
+const popupImage = imagePopup.querySelector('.popup__image');
+const popupCaption = imagePopup.querySelector('.popup__caption');
 
 // Контейнер карточек
 const list = document.querySelector('.places__list');
@@ -28,31 +30,47 @@ const newCardModal = document.querySelector('.popup_type_new-card');
 const openNewCardButton = document.querySelector('.profile__add-button');
 const closeNewCardButton = newCardModal ? newCardModal.querySelector('.popup__close') : null;
 
+// Объявляем форму добавления карточки
+const newCardForm = document.querySelector('.popup__form[name="new-place"]');
+
+openNewCardButton.addEventListener('click', () => {
+  openModal(newCardModal);
+});
+
+if (closeNewCardButton) {
+  closeNewCardButton.addEventListener('click', () => {
+    closeModal(newCardModal);
+  });
+}
+
+if (editModalElement) {
+  editModalElement.addEventListener('click', closeByOverlay);
+}
+
+if (imagePopup) {
+  imagePopup.addEventListener('click', closeByOverlay);
+}
+
+newCardModal.addEventListener('click', closeByOverlay);
+
 // Функция открытия попапа с изображением
 function openImagePopup(imageSrc, imageAlt) {
-  const popupImage = imagePopup.querySelector('.popup__image');
-  const popupCaption = imagePopup.querySelector('.popup__caption');
-
   if (imagePopup) {
     popupImage.src = imageSrc;
     popupImage.alt = imageAlt;
     popupCaption.textContent = imageAlt;
     openModal(imagePopup);
-
-    const closeImageButton = imagePopup.querySelector('.popup__close');
-    if (closeImageButton) {
-      closeImageButton.addEventListener('click', () => closeModal(imagePopup));
-    }
-    imagePopup.addEventListener('click', (event) => {
-      if (event.target === imagePopup) {
-        closeModal(imagePopup);
-      }
-    });
   }
 }
 
+// Обработчик закрытия попапа с изображением по кнопке "Закрыть"
+const closeImageButton = imagePopup.querySelector('.popup__close');
+if (closeImageButton) {
+  closeImageButton.addEventListener('click', () => closeModal(imagePopup));
+}
+
 // Обработчик отправки формы редактирования профиля
-function handleFormSubmit(evt) {
+function submitEditProfile(evt) {
   evt.preventDefault();
   const nameValue = nameInput.value;
   const jobValue = jobInput.value;
@@ -73,38 +91,16 @@ openEditButton.addEventListener('click', () => {
 closeEditButton.addEventListener('click', () => {
   closeModal(editModalElement);
 });
-editModalElement.addEventListener('click', (event) => {
-  if (event.target === editModalElement) {
-    closeModal(editModalElement);
-  }
-});
 
-// Обработчик отправки формы редактирования профиля
-profileForm.addEventListener('submit', handleFormSubmit);
+// Назначаем обработчик для формы редактирования профиля
+profileForm.addEventListener('submit', submitEditProfile);
 
-// Обработчики для модального окна добавления новой карточки (если окно существует)
-if (newCardModal) {
-  openNewCardButton.addEventListener('click', () => {
-    openModal(newCardModal);
-  });
-  closeNewCardButton.addEventListener('click', () => {
-    closeModal(newCardModal);
-  });
-  newCardModal.addEventListener('click', (event) => {
-    if (event.target === newCardModal) {
-      closeModal(newCardModal);
-    }
-  });
-}
-
-// Обработчик отправки формы добавления карточки
-const newCardForm = document.querySelector('.popup__form[name="new-place"]');
-newCardForm.addEventListener('submit', function(event) {
+// Функция-обработчик отправки формы добавления карточки
+function submitAddCardForm(event) {
   event.preventDefault();
   const placeName = newCardForm.querySelector('input[name="place-name"]').value;
   const link = newCardForm.querySelector('input[name="link"]').value;
   const newCard = { name: placeName, link: link };
-  initialCards.unshift(newCard);
   const cardElement = createCard(newCard, deleteCard, likeCard, openImagePopup);
   list.prepend(cardElement);
   newCardForm.reset();
@@ -112,7 +108,10 @@ newCardForm.addEventListener('submit', function(event) {
   if (popup) {
     closeModal(popup);
   }
-});
+}
+
+// Назначаем обработчик для формы добавления карточки
+newCardForm.addEventListener('submit', submitAddCardForm);
 
 // Добавление начальных карточек
 initialCards.forEach((cardData) => {
