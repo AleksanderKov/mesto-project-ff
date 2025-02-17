@@ -7,6 +7,7 @@ import { openModal, closeModal, closeByOverlay } from './components/modal.js';
 const editModalElement = document.querySelector('.popup_type_edit');
 const openEditButton = document.querySelector('.profile__edit-button');
 const closeEditButton = editModalElement.querySelector('.popup__close');
+const popup = document.querySelector('.popup_type_edit');
 
 // Форма редактирования профиля и поля ввода
 const profileForm = document.querySelector('.popup__form');
@@ -76,10 +77,7 @@ function submitEditProfile(evt) {
   const jobValue = jobInput.value;
   profileTitle.textContent = nameValue;
   profileDescription.textContent = jobValue;
-  const popup = evt.target.closest('.popup');
-  if (popup) {
-    closeModal(popup);
-  }
+  closeModal(popup);
 }
 
 // Обработчики для модального окна редактирования профиля
@@ -104,10 +102,7 @@ function submitAddCardForm(event) {
   const cardElement = createCard(newCard, deleteCard, likeCard, openImagePopup);
   list.prepend(cardElement);
   newCardForm.reset();
-  const popup = newCardForm.closest('.popup');
-  if (popup) {
-    closeModal(popup);
-  }
+  closeModal(newCardModal);
 }
 
 // Назначаем обработчик для формы добавления карточки
