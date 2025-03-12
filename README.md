@@ -30,4 +30,7 @@
 
 1. **Клонировать репозиторий:**
    ```bash
-   git clone https://github.com/AleksanderKov/mesto-project.git
+   git clone https://github.com/AleksanderKov/mesto-project-ff.git
+
+2. **Ссылка на проект:**
+   https://aleksanderkov.github.io/mesto-project-ff/
