@@ -22,3 +22,10 @@
 .card__like-button_active {
   background-image: url('../../../images/like-active.svg');
 }
+
+.card__like-quantity {
+  font-size: 13px;
+  padding: 0;
+  margin: 3px auto 0px;
+  font-weight: 400;
+}

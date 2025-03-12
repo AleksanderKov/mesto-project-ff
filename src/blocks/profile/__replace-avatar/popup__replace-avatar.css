@@ -1,0 +1,11 @@
+.popup__replace-avatar {
+  background-color: #fff;
+  border-radius: 10px;
+  box-sizing: border-box;
+  margin: 195px auto 0;
+  max-width: 430px;
+  min-height: 272px;
+  padding: 34px 36px;
+  position: relative;
+  width: 100%;
+}

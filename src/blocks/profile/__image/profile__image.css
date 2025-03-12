@@ -9,6 +9,11 @@
   margin: 0 29px 0 0;
 }
 
+.profile__image:hover {
+    opacity: .8;
+    cursor: pointer;
+}
+
 @media screen and (max-width: 740px) {
   .profile__image {
     margin: 0 10px 0 0;
