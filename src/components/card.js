@@ -14,6 +14,14 @@ export function createCard(item, currentUserId, handleCardDelete, handleCardLike
   const cardTitle = cardElement.querySelector('.card__title');
   cardTitle.textContent = item.name;
   
+  // Инициализация лайков: установка количества лайков и проверка лайка от текущего пользователя
+  const likeButton = cardElement.querySelector('.card__like-button');
+  const likeQuantity = cardElement.querySelector('.card__like-quantity');
+  likeQuantity.textContent = item.likes.length; // устанавливаем количество лайков
+  if (item.likes.some(user => user._id === currentUserId)) {
+    likeButton.classList.add('card__like-button_active');
+  }
+  
   // Обработка кнопки удаления
   const deleteButton = cardElement.querySelector('.card__delete-button');
   if (item.owner._id !== currentUserId) {
@@ -26,8 +34,7 @@ export function createCard(item, currentUserId, handleCardDelete, handleCardLike
     });
   }
   
-  // Обработка лайка карточки
-  const likeButton = cardElement.querySelector('.card__like-button');
+  // Обработка лайка карточки (обработчик уже подключён после инициализации состояния)
   likeButton.addEventListener('click', () => handleCardLike(item._id, likeButton, cardElement));
   
   // Обработка клика по изображению для открытия попапа с изображением

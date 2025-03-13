@@ -14,6 +14,7 @@ import {
 
 // Глобальные переменные
 let currentUserId;
+let confirmCallbackGlobal = null;
 
 // Получение DOM-элементов
 
@@ -44,12 +45,18 @@ const openNewCardButton = document.querySelector('.profile__add-button');
 const closeNewCardButton = newCardModal ? newCardModal.querySelector('.popup__close') : null;
 const newCardForm = document.querySelector('.popup__form[name="new-place"]');
 
+// Удаление карточки попап
+const confirmPopup = document.querySelector('.popup_type_confirm');
+const confirmButton = confirmPopup.querySelector('.popup__confirm-button');
+const confirmCloseButton = confirmPopup.querySelector('.popup__close');
+
 // Обновление аватара
 const avatarModal = document.querySelector('.popup_type_replace_avatar');
 const avatarForm = avatarModal.querySelector('.popup__form');
 const avatarInput = avatarModal.querySelector('#replace-avatar-link-input');
 const avatarSubmitButton = avatarModal.querySelector('.popup__button');
 const profileAvatar = document.querySelector('.profile__image');
+const avatarReplaceButton = document.querySelector('.profile__image-replace-avatar');
 
 // Настройки валидации
 const validationConfig = {
@@ -67,22 +74,30 @@ initializeValidation(validationConfig);
 
 // Открыть попап добавления карточки
 openNewCardButton.addEventListener('click', () => {
-  resetValidation(newCardForm, validationConfig);
+  const nameInput = newCardForm.querySelector('input[name="place-name"]');
+  const linkInput = newCardForm.querySelector('input[name="link"]');
+  if (!nameInput.value && !linkInput.value) {
+    resetValidation(newCardForm, validationConfig);
+  }
   openModal(newCardModal);
 });
 if (closeNewCardButton) {
   closeNewCardButton.addEventListener('click', () => closeModal(newCardModal));
 }
 
-// Закрытие по клику на оверлей
+// Закрытие по клику на оверлей для соответствующих попапов
 if (editModalElement) { editModalElement.addEventListener('click', closeByOverlay); }
 if (imagePopup) { imagePopup.addEventListener('click', closeByOverlay); }
 newCardModal.addEventListener('click', closeByOverlay);
 
 // Открыть попап редактирования профиля
 openEditButton.addEventListener('click', () => {
-  nameInput.value = profileTitle.textContent;
-  jobInput.value = profileDescription.textContent;
+  if (!nameInput.value) {
+    nameInput.value = profileTitle.textContent;
+  }
+  if (!jobInput.value) {
+    jobInput.value = profileDescription.textContent;
+  }
   resetValidation(profileForm, validationConfig);
   nameInput.dispatchEvent(new Event('input'));
   jobInput.dispatchEvent(new Event('input'));
@@ -103,6 +118,7 @@ function submitEditProfile(evt) {
     .then((data) => {
       profileTitle.textContent = data.name;
       profileDescription.textContent = data.about;
+      profileForm.reset();
       closeModal(editModalElement);
     })
     .catch(err => console.log(err))
@@ -157,6 +173,8 @@ function submitAddCardForm(event) {
       const cardElement = createCard(newCardData, currentUserId, handleCardDelete, handleCardLike, openImagePopup, cardTemplate);
       list.prepend(cardElement);
       newCardForm.reset();
+      // Сброс валидации после успешного сабмита:
+      resetValidation(newCardForm, validationConfig);
       closeModal(newCardModal);
     })
     .catch(err => console.log(err))
@@ -177,7 +195,33 @@ loadInitialData()
   })
   .catch(err => console.log(err));
 
-// Удаление карточки с подтверждением
+// confirm popup
+
+// Слушатель закрытия попапа по клику на оверлей
+confirmPopup.addEventListener('click', closeByOverlay);
+
+// Слушатель для кнопки закрытия попапа
+confirmCloseButton.addEventListener('click', () => {
+  closeModal(confirmPopup);
+  confirmCallbackGlobal = null;
+});
+
+// Слушатель для кнопки подтверждения
+confirmButton.addEventListener('click', () => {
+  if (confirmCallbackGlobal) {
+    confirmCallbackGlobal();
+    confirmCallbackGlobal = null;
+    closeModal(confirmPopup);
+  }
+});
+
+// Открытие confirm popup
+function openConfirmPopup(confirmCallback) {
+  confirmCallbackGlobal = confirmCallback;
+  openModal(confirmPopup);
+}
+
+// Функция для удаления карточки
 function handleCardDelete(cardId, cardElement) {
   openConfirmPopup(() => {
     deleteCardOnServer(cardId)
@@ -186,51 +230,7 @@ function handleCardDelete(cardId, cardElement) {
   });
 }
 
-// Специфичный confirm popup
-function openConfirmPopup(confirmCallback) {
-  let confirmPopup = document.querySelector('.popup_type_confirm');
-  if (!confirmPopup) {
-    const template = document.querySelector('#confirm-popup-template');
-    if (!template) {
-      console.error('Не найден шаблон confirm popup');
-      return;
-    }
-    confirmPopup = document.importNode(template.content, true).firstElementChild;
-    document.body.append(confirmPopup);
-    confirmPopup.addEventListener('click', closeByOverlay);
-  }
-  const confirmButton = confirmPopup.querySelector('.popup__confirm-button');
-  if (!confirmButton) {
-    console.error('Не найдена кнопка подтверждения');
-    return;
-  }
-  const closeButton = confirmPopup.querySelector('.popup__close');
-  if (closeButton) {
-    closeButton.addEventListener('click', () => closeModal(confirmPopup));
-  }
-  openModal(confirmPopup);
-  function handleConfirm() {
-    confirmCallback();
-    closeModal(confirmPopup);
-    confirmButton.removeEventListener('click', handleConfirm);
-  }
-  confirmButton.addEventListener('click', handleConfirm);
-}
-
 // Для обновления аватара
-
-// Управление состоянием кнопки ввода аватара
-avatarSubmitButton.classList.add(validationConfig.inactiveButtonClass);
-avatarSubmitButton.disabled = true;
-avatarInput.addEventListener('input', () => {
-  if (avatarInput.validity.valid) {
-    avatarSubmitButton.classList.remove(validationConfig.inactiveButtonClass);
-    avatarSubmitButton.disabled = false;
-  } else {
-    avatarSubmitButton.classList.add(validationConfig.inactiveButtonClass);
-    avatarSubmitButton.disabled = true;
-  }
-});
 
 // Отправка формы обновления аватара
 function handleAvatarUpdate(evt) {
@@ -240,6 +240,7 @@ function handleAvatarUpdate(evt) {
   editAvatar(avatarUrl)
     .then((result) => {
       profileAvatar.style.backgroundImage = `url(${result.avatar})`;
+      avatarForm.reset();
       closeModal(avatarModal);
     })
     .catch((err) => { console.error('Ошибка обновления аватара:', err); })
@@ -249,10 +250,19 @@ avatarForm.addEventListener('submit', handleAvatarUpdate);
 
 // Открыть окно обновления аватара
 function openAvatarModal() {
+  resetValidation(avatarForm, validationConfig);
+  
+  if (avatarInput.validity.valid) {
+    avatarSubmitButton.classList.remove(validationConfig.inactiveButtonClass);
+    avatarSubmitButton.disabled = false;
+  }
+  
   openModal(avatarModal);
+  
   avatarModal.addEventListener('click', closeByOverlay);
   const avatarModalCloseButton = avatarModal.querySelector('.popup__close');
   avatarModalCloseButton.addEventListener('click', () => closeModal(avatarModal));
 }
-const avatarReplaceButton = document.querySelector('.profile__image-replace-avatar');
+
 avatarReplaceButton.addEventListener('click', openAvatarModal);
+avatarModal.addEventListener('click', closeByOverlay);
